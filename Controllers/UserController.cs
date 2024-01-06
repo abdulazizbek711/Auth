@@ -14,73 +14,51 @@ public class UserController: Controller
 {
     private readonly IUserRepository _userRepository;
     private readonly IMapper _mapper;
+    private readonly IUserService _userService;
+    private readonly IUserMap _userMap;
     private readonly DataContext _context;
 
-    public UserController(IUserRepository userRepository, IMapper mapper)
+    public UserController(IUserRepository userRepository, IMapper mapper, IUserService userService, IUserMap userMap)
     {
         _userRepository = userRepository;
         _mapper = mapper;
+        _userService = userService;
+        _userMap = userMap;
     }
-      [HttpGet]
-        [ProducesResponseType(200, Type = typeof(User))]
+    [HttpGet]
+        [ProducesResponseType(200, Type = typeof(IEnumerable<User>))]
         public IActionResult GetUsers()
         {
-            var users = _userRepository.GetUsers();
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
+            var users = _userService.GetUsers();
             return Ok(users);
         }
         [HttpPost("{User_ID}")]
         [ProducesResponseType(204)]
         [ProducesResponseType(400)]
-        public IActionResult CreateUser([FromBody] UserDto userCreate)
+        public IActionResult CreateUser(UserDto userCreate)
         {
-            if (userCreate == null)
-                return BadRequest(ModelState);
-
-            var user = _userRepository.GetUsers()
-                .Where(c => c.UserName.Trim().ToUpper() == userCreate.UserName.TrimEnd().ToUpper())
-                .FirstOrDefault();
-
-            if (user != null)
+            var userMap = _userMap.MapUser(userCreate);
+            (bool success, string message) result = _userService.CreateUser(userMap, userCreate);
+            if (!result.success)
             {
-                ModelState.AddModelError("", "User already exists");
-                return StatusCode(422, ModelState);
+                ModelState.AddModelError("", "Something went wrong while saving");
+                return BadRequest(ModelState);
             }
 
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
-
-            var userMap = _mapper.Map<User>(userCreate);
-
-            if (!_userRepository.CreateUser(userMap))
-            {
-                ModelState.AddModelError("", "Something went wrong while savin");
-                return StatusCode(500, ModelState);
-            }
-
-            return Ok("Successfully created");
+            return NoContent();
         }
         [HttpPut("{User_ID}")]
         [ProducesResponseType(204)]
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
-
         public IActionResult UpdateUser(int User_ID, [FromBody] UserDto updatedUser)
         {
-            if (updatedUser == null)
-                return BadRequest(ModelState);
-            if (User_ID != updatedUser.User_ID)
-                return BadRequest(ModelState);
-            if (!_userRepository.UserExists(User_ID))
-                return NotFound();
-            if (!ModelState.IsValid)
-                return BadRequest();
-            var userMap = _mapper.Map<User>(updatedUser);
-            if (!_userRepository.UpdateUser(userMap))
+            var userMap = _userMap.MappUser(User_ID, updatedUser);
+            (bool success, string message) result = _userService.UpdateUser(userMap, User_ID, updatedUser);
+            if (!result.success)
             {
-                ModelState.AddModelError("", "Something went wrong updating user");
-                return StatusCode(500, ModelState);
+                ModelState.AddModelError("", "Something went wrong while updating");
+                return BadRequest(ModelState);
             }
 
             return NoContent();
@@ -91,17 +69,13 @@ public class UserController: Controller
         [ProducesResponseType(404)]
         public IActionResult DeleteUser(int User_ID)
         {
-            if (!_userRepository.UserExists(User_ID))
-                return NotFound();
             var userToDelete = _userRepository.GetUser(User_ID);
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
-            if (!_userRepository.DeleteUser(userToDelete))
+            (bool success, string message) result = _userService.DeleteUser(User_ID);
+            if (!result.success)
             {
-                ModelState.AddModelError("", "Something went wrong deleting user");
+                ModelState.AddModelError("", "Something went wrong while updating");
+                return BadRequest(ModelState);
             }
-
             return NoContent();
-
         }
 }
