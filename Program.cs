@@ -3,10 +3,12 @@ using Auth;
 using Auth.Data;
 using Auth.Helper;
 using Auth.Interfaces;
+using Auth.Middleware;
 using Auth.Repositories;
 using Auth.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
+using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -21,7 +23,31 @@ builder.Services.AddControllers().AddJsonOptions(x =>
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(c =>
+{
+    c.AddSecurityDefinition("ApiKey", new OpenApiSecurityScheme
+    {
+        Description = "The API Key to access API",
+        Type = SecuritySchemeType.ApiKey,
+        Name = "x-api-key",
+        In = ParameterLocation.Header,
+        Scheme = "ApiKeyScheme"
+    });
+    var scheme = new OpenApiSecurityScheme
+    {
+        Reference = new OpenApiReference
+        {
+            Type = ReferenceType.SecurityScheme,
+            Id = "ApiKey"
+        },
+        In = ParameterLocation.Header
+    };
+    var requirement = new OpenApiSecurityRequirement
+    {
+        { scheme, new List<string>() }
+    };
+    c.AddSecurityRequirement(requirement);
+});
 builder.Services.AddDbContext<DataContext>(options =>
 {
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"));
@@ -46,7 +72,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-
+app.UseMiddleware<AuthMiddleware>();
 app.UseAuthorization();
 
 app.MapControllers();
