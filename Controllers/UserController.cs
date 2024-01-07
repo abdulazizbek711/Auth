@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using Auth.Data;
 using Auth.Dto;
 using Auth.Interfaces;
@@ -10,7 +11,8 @@ using Microsoft.AspNetCore.Mvc;
 namespace Auth.Controllers;
 [Route("api/[controller]")]
 [ApiController]
-public class UserController: Controller
+[Authorize]
+public class UserController: ControllerBase
 {
     private readonly IUserRepository _userRepository;
     private readonly IMapper _mapper;
@@ -25,13 +27,15 @@ public class UserController: Controller
         _userService = userService;
         _userMap = userMap;
     }
-    [HttpGet]
+    [Authorize(Roles = "Admin")]
+    [HttpGet(Name = "GetUsers")]
         [ProducesResponseType(200, Type = typeof(IEnumerable<User>))]
         public IActionResult GetUsers()
         {
             var users = _userService.GetUsers();
             return Ok(users);
         }
+        [Authorize]
         [HttpPost("{User_ID}")]
         [ProducesResponseType(204)]
         [ProducesResponseType(400)]
@@ -63,6 +67,7 @@ public class UserController: Controller
 
             return NoContent();
         }
+    
         [HttpDelete("{User_ID}")]
         [ProducesResponseType(400)]
         [ProducesResponseType(204)]

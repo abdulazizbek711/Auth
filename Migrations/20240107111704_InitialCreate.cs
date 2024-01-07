@@ -16,7 +16,8 @@ namespace Auth.Migrations
                     User_ID = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     UserName = table.Column<string>(type: "text", nullable: true),
-                    Email = table.Column<string>(type: "text", nullable: true)
+                    Email = table.Column<string>(type: "text", nullable: true),
+                    WalletBalance = table.Column<double>(type: "double precision", nullable: true)
                 },
                 constraints: table =>
                 {

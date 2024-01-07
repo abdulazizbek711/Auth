@@ -1,19 +1,19 @@
 using System.Text.Json.Serialization;
 using Auth;
+using Auth.Handler;
 using Auth.Data;
 using Auth.Helper;
 using Auth.Interfaces;
-using Auth.Middleware;
 using Auth.Repositories;
 using Auth.Services;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
-
-// Add services to the container.
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(options => options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles);
 builder.Services.AddTransient<Seed>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IUserService, UserService>();
@@ -23,58 +23,67 @@ builder.Services.AddControllers().AddJsonOptions(x =>
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
+// Add services to the container.
+
+// Add Entity Framework DbContext
+
+// Add controllers with JSON options
+builder.Services.AddControllers()
+    .AddJsonOptions(options => options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles);
+
+// Add Swagger
 builder.Services.AddSwaggerGen(c =>
 {
-    c.AddSecurityDefinition("ApiKey", new OpenApiSecurityScheme
+    c.SwaggerDoc("v1", new OpenApiInfo { Title = "Auth", Version = "v1" });
+    c.AddSecurityDefinition("basic", new OpenApiSecurityScheme
     {
-        Description = "The API Key to access API",
-        Type = SecuritySchemeType.ApiKey,
-        Name = "x-api-key",
+        Name = "Authorization",
+        Type = SecuritySchemeType.Http,
+        Scheme = "basic",
         In = ParameterLocation.Header,
-        Scheme = "ApiKeyScheme"
+        Description = "Basic Authorization header."
     });
-    var scheme = new OpenApiSecurityScheme
+    c.AddSecurityRequirement(new OpenApiSecurityRequirement
     {
-        Reference = new OpenApiReference
         {
-            Type = ReferenceType.SecurityScheme,
-            Id = "ApiKey"
-        },
-        In = ParameterLocation.Header
-    };
-    var requirement = new OpenApiSecurityRequirement
-    {
-        { scheme, new List<string>() }
-    };
-    c.AddSecurityRequirement(requirement);
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "basic"
+                }
+            },
+            new string[] {}
+        }
+    });
 });
+
+// Add Basic Authentication
+builder.Services.AddAuthentication("BasicAuthentication")
+    .AddScheme<AuthenticationSchemeOptions, BasicAuthenticationHandler>("BasicAuthentication", options => { /* configure options if needed */ });
 builder.Services.AddDbContext<DataContext>(options =>
 {
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"));
 });
 var app = builder.Build();
-if (args.Length == 1 && args[0].ToLower() == "seeddata")
-    SeedData(app);
-void SeedData(IHost app)
-{
-    var scopedFactory = app.Services.GetService<IServiceScopeFactory>();
-    using (var scope = scopedFactory.CreateScope())
-    {
-        var service = scope.ServiceProvider.GetService<Seed>();
-        service.SeedDataContext();
-    }
-}
-// Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
 
+// Configure the HTTP request pipeline.
+
+// Add Swagger middleware
+app.UseSwagger();
+app.UseSwaggerUI();
+
+// Enable HTTPS redirection
 app.UseHttpsRedirection();
-app.UseMiddleware<AuthMiddleware>();
+
+// Add Authentication middleware
+app.UseAuthentication();
+
+// Add Authorization middleware
 app.UseAuthorization();
 
+// Map controllers
 app.MapControllers();
 
 app.Run();
