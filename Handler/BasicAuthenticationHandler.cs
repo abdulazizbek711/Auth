@@ -2,6 +2,10 @@ using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Encodings.Web;
+using Auth.Data;
+using Auth.Dto;
+using Auth.Interfaces;
+using Auth.Models;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Http.Headers;
 using Microsoft.AspNetCore.Identity;
@@ -11,6 +15,7 @@ namespace Auth.Handler;
 
 public class BasicAuthenticationHandler: AuthenticationHandler<AuthenticationSchemeOptions>
 {
+
     public BasicAuthenticationHandler(IOptionsMonitor<AuthenticationSchemeOptions> options, ILoggerFactory logger, UrlEncoder encoder, ISystemClock clock) : base(options, logger, encoder, clock)
     {
     }
@@ -49,7 +54,8 @@ public class BasicAuthenticationHandler: AuthenticationHandler<AuthenticationSch
         {
             return AuthenticateResult.Fail("Authentication failed");
         }
-        
+
+
         var claims = new[]
         {
             new Claim(ClaimTypes.NameIdentifier, username),
@@ -59,6 +65,7 @@ public class BasicAuthenticationHandler: AuthenticationHandler<AuthenticationSch
         var claimsPrincipal = new ClaimsPrincipal(identity);
         return AuthenticateResult.Success(new AuthenticationTicket(claimsPrincipal, Scheme.Name));
     }
+    
     private async Task<string> GetHashedPasswordAsync(string token)
     {
         using (SHA256 sha256Hash = SHA256.Create())
@@ -70,6 +77,7 @@ public class BasicAuthenticationHandler: AuthenticationHandler<AuthenticationSch
             {
                 builder.Append(hashBytes[i].ToString("x2"));
             }
+            
             return builder.ToString();
         }
     }

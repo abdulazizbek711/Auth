@@ -11,7 +11,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace Auth.Controllers;
 [Route("api/[controller]")]
 [ApiController]
-[Authorize]
+[Authorize(Roles = "Admin")]
 public class UserController: ControllerBase
 {
     private readonly IUserRepository _userRepository;
@@ -27,15 +27,13 @@ public class UserController: ControllerBase
         _userService = userService;
         _userMap = userMap;
     }
-    [Authorize(Roles = "Admin")]
-    [HttpGet(Name = "GetUsers")]
+    [HttpGet]
         [ProducesResponseType(200, Type = typeof(IEnumerable<User>))]
         public IActionResult GetUsers()
         {
             var users = _userService.GetUsers();
             return Ok(users);
         }
-        [Authorize]
         [HttpPost("{User_ID}")]
         [ProducesResponseType(204)]
         [ProducesResponseType(400)]
@@ -49,7 +47,7 @@ public class UserController: ControllerBase
                 return BadRequest(ModelState);
             }
 
-            return NoContent();
+            return Ok(userCreate);
         }
         [HttpPut("{User_ID}")]
         [ProducesResponseType(204)]
@@ -58,14 +56,15 @@ public class UserController: ControllerBase
         public IActionResult UpdateUser(int User_ID, [FromBody] UserDto updatedUser)
         {
             var userMap = _userMap.MappUser(User_ID, updatedUser);
-            (bool success, string message) result = _userService.UpdateUser(userMap, User_ID, updatedUser);
-            if (!result.success)
+            var updatedDbUser = _userService.UpdateUser(userMap, User_ID, updatedUser);
+
+            if (updatedDbUser == null)
             {
                 ModelState.AddModelError("", "Something went wrong while updating");
                 return BadRequest(ModelState);
             }
 
-            return NoContent();
+            return Ok(updatedDbUser);
         }
     
         [HttpDelete("{User_ID}")]

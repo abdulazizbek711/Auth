@@ -22,6 +22,28 @@ namespace Auth.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("Auth.Models.Admin", b =>
+                {
+                    b.Property<int>("Admin_ID")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Admin_ID"));
+
+                    b.Property<string>("AdminName")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Password")
+                        .HasColumnType("text");
+
+                    b.Property<string>("token")
+                        .HasColumnType("text");
+
+                    b.HasKey("Admin_ID");
+
+                    b.ToTable("Admins");
+                });
+
             modelBuilder.Entity("Auth.Models.User", b =>
                 {
                     b.Property<int>("User_ID")

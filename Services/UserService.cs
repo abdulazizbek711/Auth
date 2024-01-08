@@ -5,7 +5,7 @@ using Auth.Models;
 using Auth.Repositories;
 
 namespace Auth.Services;
-
+//Need to do exceptions 400, 404 for all conditions==>>
 public class UserService: IUserService
 {
     private readonly IUserRepository _userRepository;
@@ -25,7 +25,21 @@ public class UserService: IUserService
         }
         return users;
     }
-    public (bool, string) CreateUser(User user, UserDto userCreate)
+
+       public User GetUser(int User_ID)
+       {
+           var user = _userRepository.GetUser(User_ID);
+           if (user == null)
+           {
+               throw new InvalidOperationException("No user found");
+           }
+
+           return user;
+       }
+
+      
+
+       public (bool, string) CreateUser(User user,  UserDto userCreate)
     {
         if (userCreate == null)
         {
@@ -41,27 +55,27 @@ public class UserService: IUserService
         _userRepository.CreateUser(user);
         return (true, "User created successfully");
     }
-    public (bool, string) UpdateUser(User user, int user_ID, UserDto updatedUser)
+    public User UpdateUser(User user, int User_ID, UserDto updatedUser)
     {
-        if (updatedUser == null || user_ID != updatedUser.User_ID)
+        if (updatedUser == null || User_ID != updatedUser.User_ID)
         {
-            return (false, "No users updated");
+            return null;
         }
 
-        var existingUser = _userRepository.GetUser(user_ID);
+        var existingUser = GetUser(User_ID);
 
         if (existingUser == null)
         {
-            return (false, "No users found");
+            return null;
         }
 
         existingUser.UserName = updatedUser.UserName ?? existingUser.UserName;
         existingUser.Email = updatedUser.Email ?? existingUser.Email;
-
+        existingUser.WalletBalance = updatedUser.WalletBalance ?? existingUser.WalletBalance;
         // Update the user in the repository
         _userRepository.UpdateUser(existingUser);
-
-        return (true, "User updated successfully");
+        var updatedDbUser = GetUser(User_ID);
+        return updatedDbUser;
     }
 
     public (bool, string) DeleteUser(int User_ID)

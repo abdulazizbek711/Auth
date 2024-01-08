@@ -31,10 +31,6 @@ public class UserMap: IUserMap
         var existingUser = _userRepository.GetUser(User_ID);
         var userMap = _mapper.Map<User>(existingUser);
         var updateResult = _userService.UpdateUser(userMap, User_ID, updatedUser);
-        if (!updateResult.Item1)
-        {
-            throw new InvalidOperationException($"Failed to update user: {updateResult.Item2}");
-        }
         return userMap;
     }
 }
