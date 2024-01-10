@@ -40,41 +40,76 @@ public class AdminService: IAdminService
 
       
 
-       public (bool, string) CreateAdmin(Admin admin,  AdminDto adminCreate)
+       public (bool, string) CreateAdmin(AdminDto adminCreate)
     {
         if (adminCreate == null)
         {
             return (false, "No Admins Created");
         }
+
+        // Hash the password
+        adminCreate.Password = GetHashCode(adminCreate.Admin_ID, adminCreate.Password);
+
+        // Check if an admin with the specified ID already exists
         var existingAdmin = _adminRepository.GetAdmins()
             .FirstOrDefault(c => c.Admin_ID != null &&
                                  c.Admin_ID.ToString().Trim().ToUpper() == adminCreate.Admin_ID.ToString().Trim().ToUpper());
+
         if (existingAdmin != null)
         {
             return (false, "Admin already exists");
         }
-        _adminRepository.CreateAdmin(admin);
-        return (true, "Admin created successfully");
-    }
-    public Admin UpdateAdmin(Admin admin, int Admin_ID, AdminDto updatedAdmin)
-    {
-        if (updatedAdmin == null || Admin_ID != updatedAdmin.Admin_ID)
+
+        // Create a new Admin entity
+        var newAdmin = new Admin
         {
-            return null;
+            Admin_ID = adminCreate.Admin_ID,
+            AdminName = adminCreate.AdminName,
+            Password = adminCreate.Password
+            // Set other properties as needed
+        };
+
+        // Save the new admin to the data store
+        bool created = _adminRepository.CreateAdmin(newAdmin);
+
+        if (created)
+        {
+            return (true, "Admin created successfully");
         }
 
-        var existingAdmin = GetAdmin(Admin_ID);
-
-        if (existingAdmin == null)
-        {
-            return null;
-        }
-        
-        // Update the user in the repository
-        _adminRepository.UpdateAdmin(existingAdmin);
-        var updatedDbAdmin = GetAdmin(Admin_ID);
-        return updatedDbAdmin;
+        return (false, "Failed to create admin");
     }
+       public Admin UpdateAdmin(Admin admin, int Admin_ID, AdminDto updatedAdmin)
+       {
+           if (updatedAdmin == null || Admin_ID != updatedAdmin.Admin_ID)
+           {
+               return null;
+           }
+
+           var existingAdmin = GetAdmin(Admin_ID);
+
+           if (existingAdmin == null)
+           {
+               return null;
+           }
+
+           // Update the properties of the existing admin
+           existingAdmin.AdminName = updatedAdmin.AdminName;
+
+           // Hash the updated password if provided
+           if (!string.IsNullOrEmpty(updatedAdmin.Password))
+           {
+               existingAdmin.Password = GetHashCode(existingAdmin.Admin_ID, updatedAdmin.Password);
+           }
+
+           // Update the admin in the repository
+           _adminRepository.UpdateAdmin(existingAdmin);
+
+           // Return the updated admin
+           return existingAdmin;
+       }
+
+
 
     public (bool, string) DeleteAdmin(int Admin_ID)
     {
@@ -104,7 +139,7 @@ public class AdminService: IAdminService
                 builder.Append(hashBytes[i].ToString("x2"));
             }
             
-            return builder.ToString();S
+            return builder.ToString();
         }
     }
 }

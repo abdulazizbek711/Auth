@@ -15,6 +15,7 @@ namespace Auth.Handler;
 
 public class BasicAuthenticationHandler: AuthenticationHandler<AuthenticationSchemeOptions>
 {
+  
 
     public BasicAuthenticationHandler(IOptionsMonitor<AuthenticationSchemeOptions> options, ILoggerFactory logger, UrlEncoder encoder, ISystemClock clock) : base(options, logger, encoder, clock)
     {
@@ -54,8 +55,6 @@ public class BasicAuthenticationHandler: AuthenticationHandler<AuthenticationSch
         {
             return AuthenticateResult.Fail("Authentication failed");
         }
-
-
         var claims = new[]
         {
             new Claim(ClaimTypes.NameIdentifier, username),
