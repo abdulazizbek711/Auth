@@ -18,7 +18,7 @@ public class UserController: ControllerBase
     private readonly IMapper _mapper;
     private readonly IUserService _userService;
     private readonly IUserMap _userMap;
-    private readonly DataContext _context;
+    private readonly MongoContext _context;
 
     public UserController(IUserRepository userRepository, IMapper mapper, IUserService userService, IUserMap userMap)
     {

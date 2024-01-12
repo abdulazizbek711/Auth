@@ -37,3 +37,16 @@
 /home/hp/Desktop/Auth/obj/Debug/net6.0/ref/Auth.dll
 /home/hp/Desktop/Auth/bin/Debug/net6.0/AutoMapper.dll
 /home/hp/Desktop/Auth/bin/Debug/net6.0/AutoMapper.Extensions.Microsoft.DependencyInjection.dll
+/home/hp/Desktop/Auth/bin/Debug/net6.0/AWSSDK.Core.dll
+/home/hp/Desktop/Auth/bin/Debug/net6.0/AWSSDK.SecurityToken.dll
+/home/hp/Desktop/Auth/bin/Debug/net6.0/DnsClient.dll
+/home/hp/Desktop/Auth/bin/Debug/net6.0/MongoDB.Bson.dll
+/home/hp/Desktop/Auth/bin/Debug/net6.0/MongoDB.Driver.dll
+/home/hp/Desktop/Auth/bin/Debug/net6.0/MongoDB.Driver.Core.dll
+/home/hp/Desktop/Auth/bin/Debug/net6.0/MongoDB.Libmongocrypt.dll
+/home/hp/Desktop/Auth/bin/Debug/net6.0/SharpCompress.dll
+/home/hp/Desktop/Auth/bin/Debug/net6.0/Snappier.dll
+/home/hp/Desktop/Auth/bin/Debug/net6.0/ZstdSharp.dll
+/home/hp/Desktop/Auth/bin/Debug/net6.0/runtimes/linux/native/libmongocrypt.so
+/home/hp/Desktop/Auth/bin/Debug/net6.0/runtimes/osx/native/libmongocrypt.dylib
+/home/hp/Desktop/Auth/bin/Debug/net6.0/runtimes/win/native/mongocrypt.dll

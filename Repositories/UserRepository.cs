@@ -1,52 +1,51 @@
+using System.Collections.Generic;
+using System.Linq;
 using Auth.Data;
 using Auth.Interfaces;
 using Auth.Models;
+using MongoDB.Driver;
 
-namespace Auth.Repositories;
-
-public class UserRepository: IUserRepository
+namespace Auth.Repositories
 {
-    private readonly DataContext _context;
+    public class UserRepository : IUserRepository
+    {
+        private readonly IMongoCollection<User> _userCollection;
 
-    public UserRepository(DataContext context)
-    {
-        _context = context;
-    }
-    public ICollection<User> GetUsers()
-    {
-        return _context.Users.OrderBy(u => u.User_ID).ToList();
-    }
+        public UserRepository(MongoContext context)
+        {
+            _userCollection = context.Users;
+        }
 
-    public User GetUser(int User_ID)
-    {
-        return _context.Users.Where(u => u.User_ID==User_ID).FirstOrDefault();
-    }
+        public ICollection<User> GetUsers()
+        {
+            return _userCollection.Find(_ => true).ToList();
+        }
 
-    public bool UserExists(int User_ID)
-    {
-        return _context.Users.Any(u => u.User_ID == User_ID);
-    }
+        public User GetUser(int User_ID)
+        {
+            return _userCollection.Find(u => u.User_ID == User_ID).FirstOrDefault();
+        }
 
-    public bool CreateUser(User user)
-    {
-        _context.Add(user);
-        return Save();
-    }
+        public bool UserExists(int User_ID)
+        {
+            return _userCollection.Find(u => u.User_ID == User_ID).Any();
+        }
 
-    public bool UpdateUser(User user)
-    {
-        _context.Update(user);
-        return Save();
-    }
+        public void CreateUser(User user)
+        {
+            _userCollection.InsertOne(user);
+        }
 
-    public bool DeleteUser(User user)
-    {
-        _context.Remove(user);
-        return Save();
-    }
-    public bool Save()
-    {
-        var saved = _context.SaveChanges();
-        return saved > 0 ? true : false;
+        public void UpdateUser(User user)
+        {
+            var filter = Builders<User>.Filter.Eq(u => u.User_ID, user.User_ID);
+            _userCollection.ReplaceOne(filter, user);
+        }
+
+        public void DeleteUser(int User_ID)
+        {
+            var filter = Builders<User>.Filter.Eq(u => u.User_ID, User_ID);
+            _userCollection.DeleteOne(filter);
+        }
     }
 }

@@ -7,7 +7,7 @@ public interface IUserRepository
     ICollection<User> GetUsers();
     User GetUser(int User_ID);
     bool UserExists(int User_ID);
-    bool CreateUser(User user);
-    bool UpdateUser(User user);
-    bool DeleteUser(User user);
+    void CreateUser(User user);
+    void UpdateUser(User user);
+    void DeleteUser(int User_ID);
 }

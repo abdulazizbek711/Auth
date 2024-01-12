@@ -1,52 +1,51 @@
+using System.Collections.Generic;
+using System.Linq;
 using Auth.Data;
 using Auth.Interfaces;
 using Auth.Models;
+using MongoDB.Driver;
 
-namespace Auth.Repositories;
-
-public class AdminRepository: IAdminRepository
+namespace Auth.Repositories
 {
-    private readonly DataContext _context;
+    public class AdminRepository : IAdminRepository
+    {
+        private readonly IMongoCollection<Admin> _adminCollection;
 
-    public AdminRepository(DataContext context)
-    {
-        _context = context;
-    }
-    public ICollection<Admin> GetAdmins()
-    {
-        return _context.Admins.OrderBy(a => a.Admin_ID).ToList();
-    }
+        public AdminRepository(MongoContext context)
+        {
+            _adminCollection = context.Admins;
+        }
 
-    public Admin GetAdmin(int Admin_ID)
-    {
-        return _context.Admins.Where(a => a.Admin_ID==Admin_ID).FirstOrDefault();
-    }
+        public ICollection<Admin> GetAdmins()
+        {
+            return _adminCollection.Find(_ => true).ToList();
+        }
 
-    public bool AdminExists(int Admin_ID)
-    {
-        return _context.Admins.Any(u => u.Admin_ID == Admin_ID);
-    }
+        public Admin GetAdmin(int adminId)
+        {
+            return _adminCollection.Find(a => a.Admin_ID == adminId).FirstOrDefault();
+        }
 
-    public bool CreateAdmin(Admin admin)
-    {
-        _context.Add(admin);
-        return Save();
-    }
+        public bool AdminExists(int Admin_ID)
+        {
+            return _adminCollection.Find(u => u.Admin_ID == Admin_ID).Any();
+        }
 
-    public bool UpdateAdmin(Admin admin)
-    {
-        _context.Update(admin);
-        return Save();
-    }
+        public void CreateAdmin(Admin admin)
+        {
+            _adminCollection.InsertOne(admin);
+        }
 
-    public bool DeleteAdmin(Admin admin)
-    {
-        _context.Remove(admin);
-        return Save();
-    }
-    public bool Save()
-    {
-        var saved = _context.SaveChanges();
-        return saved > 0 ? true : false;
+        public void UpdateAdmin(Admin admin)
+        {
+            var filter = Builders<Admin>.Filter.Eq(a => a.Admin_ID, admin.Admin_ID);
+            _adminCollection.ReplaceOne(filter, admin);
+        }
+
+        public void DeleteAdmin(int Admin_ID)
+        {
+            var filter = Builders<Admin>.Filter.Eq(a => a.Admin_ID, Admin_ID);
+            _adminCollection.DeleteOne(filter);
+        }
     }
 }

@@ -10,9 +10,9 @@ namespace Auth.Services;
 public class AdminService: IAdminService
 {
     private readonly IAdminRepository _adminRepository;
-    private readonly DataContext _context;
+    private readonly MongoContext _context;
 
-    public AdminService(IAdminRepository adminRepository, DataContext context)
+    public AdminService(IAdminRepository adminRepository, MongoContext context)
     {
         _adminRepository = adminRepository;
         _context = context;
@@ -38,47 +38,51 @@ public class AdminService: IAdminService
            return admin;
        }
 
-      
 
-       public (bool, string) CreateAdmin(AdminDto adminCreate)
-    {
-        if (adminCreate == null)
-        {
-            return (false, "No Admins Created");
-        }
 
-        // Hash the password
-        adminCreate.Password = GetHashCode(adminCreate.Admin_ID, adminCreate.Password);
+       public (bool Success, string Message) CreateAdmin(AdminDto adminCreate)
+       {
+           if (adminCreate == null)
+           {
+               return (false, "No Admins Created");
+           }
 
-        // Check if an admin with the specified ID already exists
-        var existingAdmin = _adminRepository.GetAdmins()
-            .FirstOrDefault(c => c.Admin_ID != null &&
-                                 c.Admin_ID.ToString().Trim().ToUpper() == adminCreate.Admin_ID.ToString().Trim().ToUpper());
+           // Hash the password
+           adminCreate.Password = GetHashCode(adminCreate.Admin_ID, adminCreate.Password);
 
-        if (existingAdmin != null)
-        {
-            return (false, "Admin already exists");
-        }
+           // Check if an admin with the specified ID already exists
+           var existingAdmin = _adminRepository.GetAdmins()
+               .FirstOrDefault(c => c.Admin_ID != null &&
+                                    c.Admin_ID.ToString().Trim().ToUpper() ==
+                                    adminCreate.Admin_ID.ToString().Trim().ToUpper());
 
-        // Create a new Admin entity
-        var newAdmin = new Admin
-        {
-            Admin_ID = adminCreate.Admin_ID,
-            AdminName = adminCreate.AdminName,
-            Password = adminCreate.Password
-            // Set other properties as needed
-        };
+           if (existingAdmin != null)
+           {
+               return (false, "Admin already exists");
+           }
 
-        // Save the new admin to the data store
-        bool created = _adminRepository.CreateAdmin(newAdmin);
+           // Create a new Admin entity
+           var newAdmin = new Admin
+           {
+               Admin_ID = adminCreate.Admin_ID,
+               AdminName = adminCreate.AdminName,
+               Password = adminCreate.Password
+               // Set other properties as needed
+           };
 
-        if (created)
-        {
-            return (true, "Admin created successfully");
-        }
+           try
+           {
+               // Save the new admin to the data store
+               _adminRepository.CreateAdmin(newAdmin);
+               return (true, "Admin created successfully");
+           }
+           catch (Exception ex)
+           {
+               // Log or handle the exception as needed
+               return (false, $"Failed to create admin: {ex.Message}");
+           }
+       }
 
-        return (false, "Failed to create admin");
-    }
        public Admin UpdateAdmin(Admin admin, int Admin_ID, AdminDto updatedAdmin)
        {
            if (updatedAdmin == null || Admin_ID != updatedAdmin.Admin_ID)
@@ -122,7 +126,7 @@ public class AdminService: IAdminService
         {
             return (false, "Admin not exist");
         }
-        _adminRepository.DeleteAdmin(adminToDelete);
+        _adminRepository.DeleteAdmin(Admin_ID);
         return (true, "Admin successfully deleted");
     }
 

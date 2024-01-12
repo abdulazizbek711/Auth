@@ -9,9 +9,9 @@ namespace Auth.Services;
 public class UserService: IUserService
 {
     private readonly IUserRepository _userRepository;
-    private readonly DataContext _context;
+    private readonly MongoContext _context;
 
-    public UserService(IUserRepository userRepository, DataContext context)
+    public UserService(IUserRepository userRepository, MongoContext context)
     {
         _userRepository = userRepository;
         _context = context;
@@ -89,7 +89,7 @@ public class UserService: IUserService
         {
             return (false, "User not exist");
         }
-        _userRepository.DeleteUser(userToDelete);
+        _userRepository.DeleteUser(User_ID);
         return (true, "User successfully deleted");
     }
 }

@@ -16,9 +16,9 @@ public class AdminController: Controller
     private readonly IMapper _mapper;
     private readonly IAdminService _adminService;
     private readonly IAdminMap _adminMap;
-    private readonly DataContext _context;
+    private readonly MongoContext _context;
 
-    public AdminController(IAdminRepository adminRepository, IMapper mapper, IAdminService adminService, IAdminMap adminMap, DataContext context, AdminnDto adminnDto)
+    public AdminController(IAdminRepository adminRepository, IMapper mapper, IAdminService adminService, IAdminMap adminMap, MongoContext context, AdminnDto adminnDto)
     {
         _adminRepository = adminRepository;
         _mapper = mapper;
@@ -48,9 +48,9 @@ public class AdminController: Controller
     [ProducesResponseType(400)]
     public IActionResult CreateUser(AdminDto adminCreate)
     {
-        var (success, message) = _adminService.CreateAdmin(adminCreate);
+        var result = _adminService.CreateAdmin(adminCreate);
 
-        if (success)
+        if (result.Item1)
         {
             string hashedToken = _adminService.GetHashCode(adminCreate.Admin_ID, adminCreate.Password);
 
@@ -63,7 +63,7 @@ public class AdminController: Controller
             return CreatedAtAction(nameof(GetAdmins), new { Admin_ID = responseDto.Admin_ID }, responseDto);
         }
 
-        return BadRequest(message);
+        return BadRequest(result.Item2);
     }
 
 

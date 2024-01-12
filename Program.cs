@@ -4,6 +4,7 @@ using Auth.Handler;
 using Auth.Data;
 using Auth.Helper;
 using Auth.Interfaces;
+using Auth.Models;
 using Auth.Repositories;
 using Auth.Services;
 using Microsoft.AspNetCore.Authentication;
@@ -60,9 +61,11 @@ builder.Services.AddSwaggerGen(c =>
 // Add Basic Authentication
 builder.Services.AddAuthentication("BasicAuthentication")
     .AddScheme<AuthenticationSchemeOptions, BasicAuthenticationHandler>("BasicAuthentication", options => { /* configure options if needed */ });
-builder.Services.AddDbContext<DataContext>(options =>
+builder.Services.AddScoped<MongoContext>(options =>
 {
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"));
+    var connectionString = builder.Configuration.GetSection("AuthStoreDatabase:ConnectionString").Value;
+    var databaseName = builder.Configuration.GetSection("AuthStoreDatabase:DatabaseName").Value;
+    return new MongoContext(connectionString, databaseName);
 });
 var app = builder.Build();
 
