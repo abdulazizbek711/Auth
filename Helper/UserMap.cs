@@ -26,11 +26,20 @@ public class UserMap: IUserMap
         }
         return userMap;
     }
-    public User MappUser(int User_ID, UserDto updatedUser)
+    public async Task<User> MappUser(int User_ID, UserDto updatedUser)
     {
-        var existingUser = _userRepository.GetUser(User_ID);
-        var userMap = _mapper.Map<User>(existingUser);
-        var updateResult = _userService.UpdateUser(userMap, User_ID, updatedUser);
-        return userMap;
+        // Ensure to use await here
+        var existingUser = await _userRepository.GetUser(User_ID);
+
+        // Check if existingUser is not null (handle the case where the user might not be found)
+        if(existingUser != null)
+        {
+            var userMap = _mapper.Map<User>(existingUser);
+            var updateResult = await _userService.UpdateUser(userMap, User_ID, updatedUser);
+            return userMap;
+        }
+    
+        // Handle the case where the user is not found (you might want to throw an exception or return null)
+        return null;
     }
 }

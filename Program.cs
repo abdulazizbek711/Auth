@@ -15,6 +15,11 @@ using Microsoft.OpenApi.Models;
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers()
     .AddJsonOptions(options => options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles);
+builder.Services.AddControllers()
+    .AddNewtonsoftJson(options =>
+    {
+        options.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore;
+    });
 builder.Services.AddTransient<Seed>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IUserService, UserService>();
@@ -61,12 +66,7 @@ builder.Services.AddSwaggerGen(c =>
 // Add Basic Authentication
 builder.Services.AddAuthentication("BasicAuthentication")
     .AddScheme<AuthenticationSchemeOptions, BasicAuthenticationHandler>("BasicAuthentication", options => { /* configure options if needed */ });
-builder.Services.AddScoped<MongoContext>(options =>
-{
-    var connectionString = builder.Configuration.GetSection("AuthStoreDatabase:ConnectionString").Value;
-    var databaseName = builder.Configuration.GetSection("AuthStoreDatabase:DatabaseName").Value;
-    return new MongoContext(connectionString, databaseName);
-});
+builder.Services.AddSingleton<DapperContext>();
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

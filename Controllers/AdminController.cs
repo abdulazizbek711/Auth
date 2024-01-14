@@ -16,9 +16,9 @@ public class AdminController: Controller
     private readonly IMapper _mapper;
     private readonly IAdminService _adminService;
     private readonly IAdminMap _adminMap;
-    private readonly MongoContext _context;
+    private readonly DapperContext _context;
 
-    public AdminController(IAdminRepository adminRepository, IMapper mapper, IAdminService adminService, IAdminMap adminMap, MongoContext context, AdminnDto adminnDto)
+    public AdminController(IAdminRepository adminRepository, IMapper mapper, IAdminService adminService, IAdminMap adminMap, DapperContext context, AdminnDto adminnDto)
     {
         _adminRepository = adminRepository;
         _mapper = mapper;
@@ -26,87 +26,73 @@ public class AdminController: Controller
         _adminMap = adminMap;
         _context = context;
     }
-    [HttpGet]
-    [ProducesResponseType(200, Type = typeof(IEnumerable<AdminnDto>))]
-    public IActionResult GetAdmins()
-    {
-        var admins = _adminService.GetAdmins();
-
-        var adminDtos = admins.Select(admin => new AdminnDto
+     [HttpGet]
+        [ProducesResponseType(200, Type = typeof(IEnumerable<Admin>))]
+        public async Task<IActionResult> GetAdmins()
         {
-            Admin_ID = admin.Admin_ID,
-            token = admin.Password 
-        });
+            var admins = await _adminService.GetAdmins();
 
-        return Ok(adminDtos);
-    }
-
-
-
-    [HttpPost("{Admin_ID}")]
-    [ProducesResponseType(201, Type = typeof(AdminnDto))]
-    [ProducesResponseType(400)]
-    public IActionResult CreateUser(AdminDto adminCreate)
-    {
-        var result = _adminService.CreateAdmin(adminCreate);
-
-        if (result.Item1)
-        {
-            string hashedToken = _adminService.GetHashCode(adminCreate.Admin_ID, adminCreate.Password);
-
-            AdminnDto responseDto = new AdminnDto
+            var adminDtos = admins.Select(admin => new AdminnDto
             {
-                Admin_ID = adminCreate.Admin_ID,
-                token = hashedToken
-            };
+                Admin_ID = admin.Admin_ID,
+                token = admin.Password // Note: This might not be secure; consider using a secure token generation method
+            });
 
-            return CreatedAtAction(nameof(GetAdmins), new { Admin_ID = responseDto.Admin_ID }, responseDto);
+            return Ok(adminDtos);
         }
 
-        return BadRequest(result.Item2);
-    }
-
-
-        [HttpPut("{Admin_ID}")]
-        [ProducesResponseType(200, Type = typeof(AdminnDto))]
+        [HttpPost("{Admin_ID}")]
+        [ProducesResponseType(201, Type = typeof(AdminDto))]
         [ProducesResponseType(400)]
-        [ProducesResponseType(404)]
-        public IActionResult UpdateAdmin(int Admin_ID, [FromBody] AdminDto updatedAdmin)
+        public async Task<IActionResult> CreateAdmin(AdminDto adminCreate)
         {
-            var adminMap = _adminMap.MappAdmin(Admin_ID, updatedAdmin);
-            var existingAdmin = _adminService.UpdateAdmin(adminMap, Admin_ID, updatedAdmin);
+            var adminMap = _adminMap.MapAdmin(adminCreate);
+            (bool success, string message) result = await _adminService.CreateAdmin(adminMap, adminCreate);
 
-            if (existingAdmin != null)
+            if (result.success)
             {
-                string hashedToken = _adminService.GetHashCode(Admin_ID, updatedAdmin.Password);
-                
-                AdminnDto responseDto = new AdminnDto
-                {
-                    Admin_ID = Admin_ID,
-                    token = hashedToken
-                };
-
-                return Ok(responseDto);
+                return CreatedAtAction(nameof(GetAdmins), new { Admin_ID = adminMap.Admin_ID }, adminCreate);
             }
 
-            return NotFound();
+            ModelState.AddModelError("", result.message);
+            return BadRequest(ModelState);
+        }
+
+        [HttpPut("{Admin_ID}")]
+        [ProducesResponseType(200, Type = typeof(AdminDto))]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(404)]
+        public async Task<IActionResult> UpdateAdmin(int Admin_ID, [FromBody] AdminDto updatedAdmin)
+        {
+            var adminMap = await _adminMap.MappAdmin(Admin_ID, updatedAdmin);
+            var updatedDbAdmin = _adminService.UpdateAdmin(adminMap, Admin_ID, updatedAdmin);
+
+            if (updatedDbAdmin == null)
+            {
+                ModelState.AddModelError("", "Something went wrong while updating");
+                return BadRequest(ModelState);
+            }
+
+            return Ok(updatedDbAdmin);
         }
 
         [HttpDelete("{Admin_ID}")]
-            [ProducesResponseType(400)]
-            [ProducesResponseType(204)]
-            [ProducesResponseType(404)]
-            public IActionResult DeleteAdmin(int Admin_ID)
-            {
-                var adminToDelete = _adminRepository.GetAdmin(Admin_ID);
-                (bool success, string message) result = _adminService.DeleteAdmin(Admin_ID);
-                if (!result.success)
-                {
-                    ModelState.AddModelError("", "Something went wrong while updating");
-                    return BadRequest(ModelState);
-                }
+        [ProducesResponseType(400)]
+        [ProducesResponseType(204)]
+        [ProducesResponseType(404)]
+        public async Task<IActionResult> DeleteAdmin(int Admin_ID)
+        {
+            var adminToDelete = _adminRepository.GetAdmin(Admin_ID);
+            (bool success, string message) result = await _adminService.DeleteAdmin(Admin_ID);
 
-                return NoContent();
+            if (!result.success)
+            {
+                ModelState.AddModelError("", "Something went wrong while deleting");
+                return BadRequest(ModelState);
             }
+
+            return NoContent();
+        }
+    
         }
 

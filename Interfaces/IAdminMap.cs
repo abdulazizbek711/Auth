@@ -6,5 +6,5 @@ namespace Auth.Interfaces;
 public interface IAdminMap
 {
     public Admin MapAdmin(AdminDto adminCreate);
-    public Admin MappAdmin(int Admin_ID, AdminDto updatedAdmin);
+    public Task<Admin> MappAdmin(int Admin_ID, AdminDto updatedAdmin);
 }

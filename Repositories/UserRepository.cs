@@ -1,51 +1,100 @@
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 using Auth.Data;
 using Auth.Interfaces;
 using Auth.Models;
+using Dapper;
 using MongoDB.Driver;
 
 namespace Auth.Repositories
 {
     public class UserRepository : IUserRepository
     {
-        private readonly IMongoCollection<User> _userCollection;
+        private readonly DapperContext _context;
 
-        public UserRepository(MongoContext context)
+
+        public UserRepository(DapperContext context)
         {
-            _userCollection = context.Users;
+            _context = context;
         }
 
-        public ICollection<User> GetUsers()
+        public async Task<IEnumerable<User>> GetUsers()
         {
-            return _userCollection.Find(_ => true).ToList();
+            var query = "SELECT * FROM users";
+            using (var connection = _context.CreateConnection())
+            {
+                var users = await connection.QueryAsync<User>(query);
+                return users.ToList();
+            }
         }
 
-        public User GetUser(int User_ID)
+        public async Task<User> GetUser(int User_ID)
         {
-            return _userCollection.Find(u => u.User_ID == User_ID).FirstOrDefault();
+            var query = "SELECT * FROM users WHERE user_ID = @User_ID";
+            using (var connection = _context.CreateConnection())
+            {
+                var user = await connection.QueryFirstOrDefaultAsync<User>(query, new { User_ID });
+                return user;
+            }
         }
 
-        public bool UserExists(int User_ID)
+        public async Task<bool> UserExists(int User_ID)
         {
-            return _userCollection.Find(u => u.User_ID == User_ID).Any();
+            var query = "SELECT 1 FROM users WHERE user_id = @User_ID LIMIT 1";
+            using (var connection = _context.CreateConnection())
+            {
+                var result = await connection.QueryFirstOrDefaultAsync<int>(query, new { User_ID });
+                return result == 1;
+            }
         }
 
-        public void CreateUser(User user)
+
+        public async Task<User> CreateUser(User user)
         {
-            _userCollection.InsertOne(user);
+            var insertQuery = "INSERT INTO users (user_id, username, email, walletbalance) VALUES (@User_ID, @UserName, @Email, @WalletBalance)";
+            var selectQuery = "SELECT * FROM users WHERE user_id = @User_ID";
+
+            var parameters = new DynamicParameters();
+            parameters.Add("User_ID", user.User_ID, DbType.Int32);
+            parameters.Add("UserName", user.UserName, DbType.String);
+            parameters.Add("Email", user.Email, DbType.String);
+            parameters.Add("WalletBalance", user.WalletBalance, DbType.Double); // Use DbType.Double for double?
+
+            using (var connection = _context.CreateConnection())
+            {
+                // Execute the INSERT query
+                await connection.ExecuteAsync(insertQuery, parameters);
+
+                // Execute the SELECT query to retrieve the newly created user
+                var createdUser = await connection.QueryFirstOrDefaultAsync<User>(selectQuery, new { User_ID = user.User_ID });
+        
+                return createdUser;
+            }
         }
 
-        public void UpdateUser(User user)
+
+        public async Task UpdateUser(int User_ID, User user)
         {
-            var filter = Builders<User>.Filter.Eq(u => u.User_ID, user.User_ID);
-            _userCollection.ReplaceOne(filter, user);
+            var query = "UPDATE users SET username = @UserName, email = @Email, walletbalance = @WalletBalance WHERE user_id = @User_ID";
+            var parameters = new DynamicParameters();
+            parameters.Add("User_ID", User_ID, DbType.Int32);
+            parameters.Add("UserName", user.UserName, DbType.String);
+            parameters.Add("Email", user.Email, DbType.String);
+            parameters.Add("WalletBalance", user.WalletBalance, DbType.Double);
+            using (var connection = _context.CreateConnection())
+            {
+                await connection.ExecuteAsync(query, parameters);
+            }
         }
 
-        public void DeleteUser(int User_ID)
+        public async Task DeleteUser(int User_ID)
         {
-            var filter = Builders<User>.Filter.Eq(u => u.User_ID, User_ID);
-            _userCollection.DeleteOne(filter);
+            var query = "DELETE FROM users WHERE user_id = @User_ID";
+            using (var connection = _context.CreateConnection())
+            {
+                await connection.ExecuteAsync(query, new { User_ID });
+            }
         }
     }
 }

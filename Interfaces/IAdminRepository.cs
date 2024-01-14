@@ -4,11 +4,11 @@ namespace Auth.Interfaces;
 
 public interface IAdminRepository
 {
-    ICollection<Admin> GetAdmins();
-    Admin GetAdmin(int Admin_ID);
-    bool AdminExists(int Admin_ID);
-    void CreateAdmin(Admin admin);
-    void UpdateAdmin(Admin admin);
-    void DeleteAdmin(int Admin_ID);
+    public Task<IEnumerable<Admin>> GetAdmins();
+    public Task<Admin> GetAdmin(int Admin_ID);
+    public Task<bool> AdminExists(int Admin_ID);
+    public Task<Admin> CreateAdmin(Admin admin);
+    public Task UpdateAdmin(int Admin_ID, Admin admin);
+    public Task DeleteAdmin(int Admin_ID);
     
 }

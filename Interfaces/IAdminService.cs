@@ -5,10 +5,9 @@ namespace Auth.Interfaces;
 
 public interface IAdminService
 {
-    IEnumerable<Admin> GetAdmins();
-    Admin GetAdmin(int Admin_ID);
-    public (bool Success, string Message) CreateAdmin(AdminDto adminCreate);
-    Admin UpdateAdmin(Admin admin, int Admin_ID, AdminDto updatedAdmin);
-    public (bool, string) DeleteAdmin(int Admin_ID);
-    public string GetHashCode(int Admin_ID, string? password);
+    public Task<IEnumerable<Admin>> GetAdmins();
+    public Task<Admin> GetAdmin(int Admin_ID);
+    public Task<(bool, string)> CreateAdmin(Admin admin, AdminDto adminCreate);
+    public Task<Admin> UpdateAdmin(Admin admin, int Admin_ID, AdminDto updatedAdmin);
+    public Task<(bool, string)> DeleteAdmin(int Admin_ID);
 }

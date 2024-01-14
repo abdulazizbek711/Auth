@@ -26,11 +26,17 @@ public class AdminMap: IAdminMap
         }
         return adminMap;
     }
-    public Admin MappAdmin(int Admin_ID, AdminDto updatedAdmin)
+    public async Task<Admin> MappAdmin(int Admin_ID, AdminDto updatedAdmin)
     {
-        var existingAdmin = _adminRepository.GetAdmin(Admin_ID);
-        var adminMap = _mapper.Map<Admin>(existingAdmin);
-        var updateResult = _adminService.UpdateAdmin(adminMap, Admin_ID, updatedAdmin);
-        return adminMap;
+        var existingAdmin = await _adminRepository.GetAdmin(Admin_ID);
+        if(existingAdmin != null)
+        {
+            var adminMap = _mapper.Map<Admin>(existingAdmin);
+            var updateResult = await _adminService.UpdateAdmin(adminMap, Admin_ID, updatedAdmin);
+            return adminMap;
+        }
+    
+        // Handle the case where the user is not found (you might want to throw an exception or return null)
+        return null;
     }
 }

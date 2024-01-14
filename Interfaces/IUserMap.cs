@@ -6,5 +6,5 @@ namespace Auth.Interfaces;
 public interface IUserMap
 {
     public User MapUser(UserDto userCreate);
-    public User MappUser(int User_ID, UserDto updatedUser);
+    public Task<User> MappUser(int User_ID, UserDto updatedUser);
 }
