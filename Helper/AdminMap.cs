@@ -35,8 +35,6 @@ public class AdminMap: IAdminMap
             var updateResult = await _adminService.UpdateAdmin(adminMap, Admin_ID, updatedAdmin);
             return adminMap;
         }
-    
-        // Handle the case where the user is not found (you might want to throw an exception or return null)
         return null;
     }
 }

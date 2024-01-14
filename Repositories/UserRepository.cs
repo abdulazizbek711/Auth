@@ -12,8 +12,6 @@ namespace Auth.Repositories
     public class UserRepository : IUserRepository
     {
         private readonly DapperContext _context;
-
-
         public UserRepository(DapperContext context)
         {
             _context = context;
@@ -49,7 +47,6 @@ namespace Auth.Repositories
             }
         }
 
-
         public async Task<User> CreateUser(User user)
         {
             var insertQuery = "INSERT INTO users (user_id, username, email, walletbalance) VALUES (@User_ID, @UserName, @Email, @WalletBalance)";
@@ -60,19 +57,13 @@ namespace Auth.Repositories
             parameters.Add("UserName", user.UserName, DbType.String);
             parameters.Add("Email", user.Email, DbType.String);
             parameters.Add("WalletBalance", user.WalletBalance, DbType.Double); // Use DbType.Double for double?
-
             using (var connection = _context.CreateConnection())
             {
-                // Execute the INSERT query
                 await connection.ExecuteAsync(insertQuery, parameters);
-
-                // Execute the SELECT query to retrieve the newly created user
                 var createdUser = await connection.QueryFirstOrDefaultAsync<User>(selectQuery, new { User_ID = user.User_ID });
-        
                 return createdUser;
             }
         }
-
 
         public async Task UpdateUser(int User_ID, User user)
         {
@@ -96,5 +87,6 @@ namespace Auth.Repositories
                 await connection.ExecuteAsync(query, new { User_ID });
             }
         }
+        
     }
 }

@@ -35,7 +35,7 @@ public class AdminController: Controller
             var adminDtos = admins.Select(admin => new AdminnDto
             {
                 Admin_ID = admin.Admin_ID,
-                token = admin.Password // Note: This might not be secure; consider using a secure token generation method
+                token = admin.Password 
             });
 
             return Ok(adminDtos);

@@ -37,9 +37,7 @@ public class AdminService: IAdminService
 
            return admin;
        }
-
-      
-
+    
     public async Task<(bool, string)> CreateAdmin(Admin admin, AdminDto adminCreate)
     {
         try
@@ -48,8 +46,7 @@ public class AdminService: IAdminService
             {
                 return (false, "No Admins Created");
             }
-
-            // Retrieve users asynchronously
+            
             var existingAdmins = await _adminRepository.GetAdmins();
 
             var existingAdmin = existingAdmins
@@ -61,15 +58,13 @@ public class AdminService: IAdminService
                 return (false, "Admin already exists");
             }
             adminCreate.Password = GetHashCode(adminCreate.Admin_ID, adminCreate.Password);
-
-            // Create user asynchronously
+            
             await _adminRepository.CreateAdmin(admin);
 
             return (true, "Admin created successfully");
         }
         catch (Exception ex)
         {
-            // Log the exception or handle it appropriately
             return (false, $"Failed to create admin: {ex.Message}");
         }
     }
@@ -97,17 +92,14 @@ public class AdminService: IAdminService
             {
                 existingAdmin.Password = GetHashCode(existingAdmin.Admin_ID, updatedAdmin.Password);
             }
-            // Update the user in the repository asynchronously
             await _adminRepository.UpdateAdmin(Admin_ID, existingAdmin);
-
-            // Retrieve the updated user from the repository asynchronously
+            
             var updatedDbAdmin = await GetAdmin(Admin_ID);
 
             return updatedDbAdmin;
         }
         catch (Exception ex)
         {
-            // Log the exception or handle it appropriately
             return null;
         }
     }

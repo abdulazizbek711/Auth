@@ -12,8 +12,6 @@ namespace Auth.Repositories
     public class AdminRepository : IAdminRepository
     {
         private readonly DapperContext _context;
-
-
         public AdminRepository(DapperContext context)
         {
             _context = context;
@@ -48,8 +46,7 @@ namespace Auth.Repositories
                 return result == 1;
             }
         }
-
-
+        
         public async Task<Admin> CreateAdmin(Admin admin)
         {
             var insertQuery = "INSERT INTO admins (admin_id, adminname, password, token) VALUES (@Admin_ID, @AdminName, @Password, @token)";
@@ -61,12 +58,8 @@ namespace Auth.Repositories
             parameters.Add("token", admin.token, DbType.String);
             using (var connection = _context.CreateConnection())
             {
-                // Execute the INSERT query
                 await connection.ExecuteAsync(insertQuery, parameters);
-
-                // Execute the SELECT query to retrieve the newly created user
                 var createdAdmin = await connection.QueryFirstOrDefaultAsync<Admin>(selectQuery, new { Admin_ID = admin.Admin_ID });
-        
                 return createdAdmin;
             }
         }
@@ -93,5 +86,6 @@ namespace Auth.Repositories
                 await connection.ExecuteAsync(query, new { Admin_ID });
             }
         }
+        
     }
 }
